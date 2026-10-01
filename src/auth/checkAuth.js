@@ -1,4 +1,4 @@
-import { findById } from "../services/apiKey.service";
+import { findById } from "../services/apiKey.service.js";
 
 const HEADER = {
   API_KEY: "x-api-key",
@@ -29,7 +29,7 @@ export async function apiKey(req, res, next) {
   } catch (error) {}
 }
 
-export async function permission(permissions) {
+export function permission(permissions) {
   return (req, res, next) => {
     if (!req.objKey.permissions) {
       return res.status(403).json({

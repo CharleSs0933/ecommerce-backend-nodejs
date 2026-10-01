@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import connect from "./dbs/init.mongodb.js";
 import { checkOverload } from "./helpers/check.connect.js";
 import indexRouter from "./routers/index.js";
+import { errorHandler } from "./core/error.handler.js";
+import { ErrorResponse } from "./core/error.response.js";
 
 dotenv.config();
 
@@ -27,5 +29,10 @@ checkOverload();
 app.use("/", indexRouter);
 
 // handing errors
+app.use((_req, res, next) => {
+  next(new ErrorResponse("Route not found", 404));
+});
+
+app.use(errorHandler);
 
 export default app;
