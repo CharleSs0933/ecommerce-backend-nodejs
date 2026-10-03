@@ -1,5 +1,15 @@
-import { CREATED } from "../core/success.response.js";
+import { CREATED, SuccessResponse } from "../core/success.response.js";
 import * as accessService from "../services/access.service.js";
+
+export async function login(req, res, next) {
+  try {
+    new SuccessResponse({
+      metadata: await accessService.login(req.body),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function signUp(req, res, next) {
   try {

@@ -1,10 +1,11 @@
 import { createTokenPair } from "../auth/authUtils.js";
-import { BadRequestError } from "../core/error.response.js";
+import { AuthFailureError, BadRequestError } from "../core/error.response.js";
 import shopModel from "../models/shop.model.js";
 import { getInfoData } from "../utils/index.js";
 import * as keyTokenService from "./keyToken.service.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { findByEmail } from "./shop.service.js";
 
 const RoleShop = {
   SHOP: "SHOP",
@@ -12,6 +13,49 @@ const RoleShop = {
   EDITOR: "EDITOR",
   ADMIN: "ADMIN",
 };
+
+export async function login({ email, password, refreshToken = null }) {
+  // Check email exists
+  const foundShop = await findByEmail({ email });
+
+  if (!foundShop) {
+    throw new BadRequestError("Shop not registered!");
+  }
+
+  // Match password
+  const match = await bcrypt.compare(password, foundShop.password);
+
+  if (!match) {
+    throw new AuthFailureError("Authentication error");
+  }
+
+  // Create AT vs RT and save
+  const privateKey = crypto.randomBytes(64).toString("hex");
+  const publicKey = crypto.randomBytes(64).toString("hex");
+
+  // Generate tokens
+  const tokens = await createTokenPair(
+    { userId: foundShop._id, email },
+    publicKey,
+    privateKey,
+  );
+
+  await keyTokenService.createKeyToken({
+    userId: foundShop._id,
+    refreshToken: tokens.refreshToken,
+    publicKey,
+    privateKey,
+  });
+
+  // Return data
+  return {
+    shop: getInfoData({
+      fields: ["_id", "name", "email"],
+      object: foundShop,
+    }),
+    tokens,
+  };
+}
 
 export async function signUp({ name, email, password }) {
   // Check email exists
@@ -32,35 +76,22 @@ export async function signUp({ name, email, password }) {
 
   if (newShop) {
     // Created PrivateKey, PublicKey
-    const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: "pkcs1",
-        format: "pem",
-      },
-      privateKeyEncoding: {
-        type: "pkcs1",
-        format: "pem",
-      },
-    });
-
-    // Public key CryptoGraphy Standards !
-
-    const publicKeyString = await keyTokenService.createKeyToken({
-      userId: newShop._id,
-      publicKey,
-    });
-
-    if (!publicKeyString) {
-      throw new BadRequestError("Error: PublicKeyString error!");
-    }
+    const privateKey = crypto.randomBytes(64).toString("hex");
+    const publicKey = crypto.randomBytes(64).toString("hex");
 
     // Created token pair
     const tokens = await createTokenPair(
       { userId: newShop._id, email },
-      publicKeyString,
+      publicKey,
       privateKey,
     );
+
+    await keyTokenService.createKeyToken({
+      userId: newShop._id,
+      refreshToken: tokens.refreshToken,
+      publicKey,
+      privateKey,
+    });
 
     return {
       code: 201,
