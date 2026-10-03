@@ -1,8 +1,13 @@
-import { createTokenPair } from "../auth/authUtils.js";
-import { AuthFailureError, BadRequestError } from "../core/error.response.js";
+import { createTokenPair, verifyJWT } from "../auth/authUtils.js";
+import {
+  AuthFailureError,
+  BadRequestError,
+  ForbiddenError,
+} from "../core/error.response.js";
 import shopModel from "../models/shop.model.js";
 import { getInfoData } from "../utils/index.js";
 import * as keyTokenService from "./keyToken.service.js";
+import * as shopService from "./shop.service.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { findByEmail } from "./shop.service.js";
@@ -113,5 +118,63 @@ export async function signUp({ name, email, password }) {
   return {
     code: 200,
     message: null,
+  };
+}
+
+export async function handleRefreshToken({ refreshToken }) {
+  // Check token used
+  const foundToken = await keyTokenService.findByRefreshTokenUsed({
+    refreshToken,
+  });
+
+  if (foundToken) {
+    // Decode the refresh token to get user information
+    const { userId, email } = await verifyJWT(
+      refreshToken,
+      foundToken.privateKey,
+    );
+
+    // Remove all existing tokens for this user
+    await keyTokenService.deleteKeyByUserId({ userId });
+
+    throw new ForbiddenError("Something wrong! Please re-login!");
+  }
+
+  const holderToken = await keyTokenService.findByRefreshToken({
+    refreshToken,
+  });
+
+  if (!holderToken) {
+    throw new AuthFailureError("Shop not registered!");
+  }
+
+  // Verify token
+  const { userId, email } = await verifyJWT(
+    refreshToken,
+    holderToken.privateKey,
+  );
+
+  const foundShop = await shopService.findByEmail({ email });
+
+  if (!foundShop) {
+    throw new AuthFailureError("Shop not registered!");
+  }
+
+  // Create new token pair
+  const tokens = await createTokenPair(
+    { userId, email },
+    holderToken.publicKey,
+    holderToken.privateKey,
+  );
+
+  // Update token
+  await holderToken.updateOne({
+    $set: { refreshToken: tokens.refreshToken },
+    $addToSet: { refreshTokensUsed: refreshToken }, // Add the old refresh token to the list of used tokens
+  });
+
+  return {
+    user: { userId, email },
+    tokens,
   };
 }

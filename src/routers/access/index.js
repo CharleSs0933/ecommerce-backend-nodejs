@@ -13,5 +13,6 @@ router.post("/shop/login", accessController.login);
 router.use(authentication);
 // ======================= //
 router.post("/shop/logout", accessController.logout);
+router.post("/shop/refresh-token", accessController.handleRefreshToken);
 
 export default router;

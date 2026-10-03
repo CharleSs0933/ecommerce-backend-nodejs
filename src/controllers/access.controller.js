@@ -32,3 +32,15 @@ export async function logout(req, res, next) {
     next(error);
   }
 }
+export async function handleRefreshToken(req, res, next) {
+  try {
+    new SuccessResponse({
+      message: "Refresh token handled successfully!",
+      metadata: await accessService.handleRefreshToken({
+        refreshToken: req.body.refreshToken,
+      }),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}

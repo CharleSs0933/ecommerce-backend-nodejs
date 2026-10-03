@@ -69,3 +69,7 @@ export async function authentication(req, _res, next) {
     return next(error);
   }
 }
+
+export async function verifyJWT(token, keySecret) {
+  return await jwt.verify(token, keySecret);
+}

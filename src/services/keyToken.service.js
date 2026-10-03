@@ -43,3 +43,19 @@ export async function findByUserId({ userId }) {
 export async function removeKeyById(id) {
   return await keyTokenModel.deleteOne({ _id: id });
 }
+
+export async function findByRefreshTokenUsed({ refreshToken }) {
+  return await keyTokenModel
+    .findOne({ refreshTokensUsed: refreshToken })
+    .lean();
+}
+
+export async function findByRefreshToken({ refreshToken }) {
+  return await keyTokenModel.findOne({ refreshToken });
+}
+
+export async function deleteKeyByUserId({ userId }) {
+  return await keyTokenModel.deleteOne({
+    user: new Types.ObjectId(userId),
+  });
+}
