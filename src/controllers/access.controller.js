@@ -21,3 +21,14 @@ export async function signUp(req, res, next) {
     next(error);
   }
 }
+
+export async function logout(req, res, next) {
+  try {
+    new SuccessResponse({
+      message: "Logout successfully!",
+      metadata: await accessService.logout({ keyStore: req.keyStore }),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}

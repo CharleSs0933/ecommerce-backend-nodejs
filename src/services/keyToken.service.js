@@ -1,4 +1,5 @@
 import keyTokenModel from "../models/keyToken.model.js";
+import { Types } from "mongoose";
 
 export async function createKeyToken({
   userId,
@@ -31,4 +32,14 @@ export async function createKeyToken({
   } catch (error) {
     return error;
   }
+}
+
+export async function findByUserId({ userId }) {
+  return await keyTokenModel
+    .findOne({ user: new Types.ObjectId(userId) })
+    .lean();
+}
+
+export async function removeKeyById(id) {
+  return await keyTokenModel.deleteOne({ _id: id });
 }

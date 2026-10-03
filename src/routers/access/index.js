@@ -1,5 +1,6 @@
 import express from "express";
 import * as accessController from "../../controllers/access.controller.js";
+import { authentication } from "../../auth/authUtils.js";
 
 const router = express.Router();
 
@@ -7,5 +8,10 @@ const router = express.Router();
 router.post("/shop/signup", accessController.signUp);
 // login
 router.post("/shop/login", accessController.login);
+
+// authentication
+router.use(authentication);
+// ======================= //
+router.post("/shop/logout", accessController.logout);
 
 export default router;

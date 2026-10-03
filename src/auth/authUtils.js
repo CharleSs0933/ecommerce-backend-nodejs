@@ -1,4 +1,12 @@
 import jwt from "jsonwebtoken";
+import { AuthFailureError, NotFoundError } from "../core/error.response.js";
+import * as keyTokenService from "../services/keyToken.service.js";
+
+const HEADER = {
+  API_KEY: "x-api-key",
+  CLIENT_ID: "x-client-id",
+  AUTHORIZATION: "authorization",
+};
 
 export async function createTokenPair(payload, publicKey, privateKey) {
   try {
@@ -23,7 +31,41 @@ export async function createTokenPair(payload, publicKey, privateKey) {
     });
 
     return { accessToken, refreshToken };
+  } catch (error) {}
+}
+
+export async function authentication(req, _res, next) {
+  try {
+    // Check userId missing???
+    const userId = req.headers[HEADER.CLIENT_ID]?.toString();
+
+    if (!userId) {
+      throw new AuthFailureError("Invalid request");
+    }
+
+    // Get access token
+    const keyStore = await keyTokenService.findByUserId({ userId });
+    if (!keyStore) {
+      throw new NotFoundError("Not found keyStore");
+    }
+
+    // Verify token
+    const accessToken = req.headers[HEADER.AUTHORIZATION];
+    if (!accessToken) {
+      throw new AuthFailureError("Invalid request");
+    }
+
+    // Check user in dbs
+    const decodeUser = jwt.verify(accessToken, keyStore.publicKey);
+    if (userId !== decodeUser.userId) {
+      throw new AuthFailureError("Invalid UserId");
+    }
+
+    req.keyStore = keyStore;
+    // Check keyStore with userId
+    // Return next
+    return next();
   } catch (error) {
-    throw error;
+    return next(error);
   }
 }

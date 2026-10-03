@@ -14,6 +14,11 @@ const RoleShop = {
   ADMIN: "ADMIN",
 };
 
+export async function logout({ keyStore }) {
+  const delKey = await keyTokenService.removeKeyById(keyStore._id);
+  return delKey;
+}
+
 export async function login({ email, password, refreshToken = null }) {
   // Check email exists
   const foundShop = await findByEmail({ email });
