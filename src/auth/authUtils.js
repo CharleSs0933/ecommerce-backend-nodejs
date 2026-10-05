@@ -6,6 +6,7 @@ const HEADER = {
   API_KEY: "x-api-key",
   CLIENT_ID: "x-client-id",
   AUTHORIZATION: "authorization",
+  REFRESH_TOKEN: "x-refresh-token",
 };
 
 export async function createTokenPair(payload, publicKey, privateKey) {
@@ -37,7 +38,7 @@ export async function createTokenPair(payload, publicKey, privateKey) {
 export async function authentication(req, _res, next) {
   try {
     // Check userId missing???
-    const userId = req.headers[HEADER.CLIENT_ID]?.toString();
+    const userId = req.headers[HEADER.CLIENT_ID];
 
     if (!userId) {
       throw new AuthFailureError("Invalid request");
@@ -47,6 +48,18 @@ export async function authentication(req, _res, next) {
     const keyStore = await keyTokenService.findByUserId({ userId });
     if (!keyStore) {
       throw new NotFoundError("Not found keyStore");
+    }
+
+    const refreshToken = req.headers[HEADER.REFRESH_TOKEN];
+    if (refreshToken) {
+      const decodeUser = jwt.verify(refreshToken, keyStore.privateKey);
+      if (userId !== decodeUser.userId) {
+        throw new AuthFailureError("Invalid UserId");
+      }
+      req.keyStore = keyStore;
+      req.user = decodeUser;
+      req.refreshToken = refreshToken;
+      return next();
     }
 
     // Verify token

@@ -37,7 +37,9 @@ export async function handleRefreshToken(req, res, next) {
     new SuccessResponse({
       message: "Refresh token handled successfully!",
       metadata: await accessService.handleRefreshToken({
-        refreshToken: req.body.refreshToken,
+        refreshToken: req.refreshToken,
+        user: req.user,
+        keyStore: req.keyStore,
       }),
     }).send(res);
   } catch (error) {

@@ -35,9 +35,7 @@ export async function createKeyToken({
 }
 
 export async function findByUserId({ userId }) {
-  return await keyTokenModel
-    .findOne({ user: new Types.ObjectId(userId) })
-    .lean();
+  return await keyTokenModel.findOne({ user: new Types.ObjectId(userId) });
 }
 
 export async function removeKeyById(id) {
