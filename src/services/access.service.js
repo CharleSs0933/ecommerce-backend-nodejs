@@ -121,38 +121,16 @@ export async function signUp({ name, email, password }) {
   };
 }
 
-export async function handleRefreshToken({ refreshToken }) {
-  // Check token used
-  const foundToken = await keyTokenService.findByRefreshTokenUsed({
-    refreshToken,
-  });
-
-  if (foundToken) {
-    // Decode the refresh token to get user information
-    const { userId, email } = await verifyJWT(
-      refreshToken,
-      foundToken.privateKey,
-    );
-
-    // Remove all existing tokens for this user
+export async function handleRefreshToken({ refreshToken, user, keyStore }) {
+  const { userId, email } = user;
+  if (keyStore.refreshTokensUsed.includes(refreshToken)) {
     await keyTokenService.deleteKeyByUserId({ userId });
-
     throw new ForbiddenError("Something wrong! Please re-login!");
   }
 
-  const holderToken = await keyTokenService.findByRefreshToken({
-    refreshToken,
-  });
-
-  if (!holderToken) {
+  if (keyStore.refreshToken !== refreshToken) {
     throw new AuthFailureError("Shop not registered!");
   }
-
-  // Verify token
-  const { userId, email } = await verifyJWT(
-    refreshToken,
-    holderToken.privateKey,
-  );
 
   const foundShop = await shopService.findByEmail({ email });
 
@@ -163,12 +141,12 @@ export async function handleRefreshToken({ refreshToken }) {
   // Create new token pair
   const tokens = await createTokenPair(
     { userId, email },
-    holderToken.publicKey,
-    holderToken.privateKey,
+    keyStore.publicKey,
+    keyStore.privateKey,
   );
 
   // Update token
-  await holderToken.updateOne({
+  await keyStore.updateOne({
     $set: { refreshToken: tokens.refreshToken },
     $addToSet: { refreshTokensUsed: refreshToken }, // Add the old refresh token to the list of used tokens
   });
