@@ -75,7 +75,7 @@ export async function authentication(req, _res, next) {
     }
 
     req.keyStore = keyStore;
-    // Check keyStore with userId
+    req.user = decodeUser;
     // Return next
     return next();
   } catch (error) {

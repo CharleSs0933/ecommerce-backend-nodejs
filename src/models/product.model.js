@@ -59,6 +59,10 @@ const clothingSchema = new Schema(
     material: {
       type: String,
     },
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+    },
   },
   {
     collection: "Clothes",
@@ -67,7 +71,7 @@ const clothingSchema = new Schema(
 );
 
 // define the product type = electronics
-const electronicSchema = new Schema(
+const electronicsSchema = new Schema(
   {
     manufacturer: {
       type: String,
@@ -79,6 +83,10 @@ const electronicSchema = new Schema(
     color: {
       type: String,
     },
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+    },
   },
   {
     collection: "Electronics",
@@ -86,7 +94,32 @@ const electronicSchema = new Schema(
   },
 );
 
+// define the product type = furniture
+const furnitureSchema = new Schema(
+  {
+    brand: {
+      type: String,
+      required: true,
+    },
+    size: {
+      type: String,
+    },
+    material: {
+      type: String,
+    },
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+    },
+  },
+  {
+    collection: "Furnitures",
+    timestamps: true,
+  },
+);
+
 //Export the model
 export const clothingModel = model("Clothing", clothingSchema);
-export const electronicModel = model("Electronic", electronicSchema);
+export const electronicsModel = model("Electronics", electronicsSchema);
 export const productModel = model(DOCUMENT_NAME, productSchema);
+export const furnitureModel = model("Furniture", furnitureSchema);
