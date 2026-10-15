@@ -92,3 +92,12 @@ export async function unPublishProductByShop({ product_id, product_shop }) {
 
   return modifiedCount;
 }
+
+export async function updateProductById({
+  product_id,
+  payload,
+  model,
+  isNew = true,
+}) {
+  return await model.findByIdAndUpdate(product_id, payload, { new: isNew });
+}

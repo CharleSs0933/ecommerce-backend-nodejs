@@ -12,6 +12,7 @@ router.get("/:id", productController.getProduct);
 router.use(authentication);
 // ============================ //
 router.post("/", productController.createProduct);
+router.patch("/:id", productController.updateProduct);
 router.post("/publish/:id", productController.publishProductByShop);
 router.post("/unpublish/:id", productController.publishProductByShop);
 

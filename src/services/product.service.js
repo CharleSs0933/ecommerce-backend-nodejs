@@ -6,6 +6,10 @@ import {
   furnitureModel,
 } from "../models/product.model.js";
 import * as productRepo from "../models/repositories/product.repo.js";
+import {
+  removeUndefinedObject,
+  updateNestedObjectParser,
+} from "../utils/index.js";
 
 //#region POST
 
@@ -45,6 +49,17 @@ async function createBaseProduct(payload) {
 }
 
 /**
+ * Update base product
+ */
+async function updateBaseProduct({ product_id, payload }) {
+  return await productRepo.updateProductById({
+    product_id,
+    payload: updateNestedObjectParser(payload),
+    model: productModel,
+  });
+}
+
+/**
  * Create Clothing product
  */
 async function createClothing(payload) {
@@ -60,6 +75,19 @@ async function createClothing(payload) {
   }
 
   return createBaseProduct({ ...payload, _id: newClothing._id });
+}
+
+async function updateClothing({ product_id, payload }) {
+  const { product_attributes } = payload;
+  if (product_attributes) {
+    await productRepo.updateProductById({
+      product_id,
+      payload: updateNestedObjectParser(product_attributes),
+      model: clothingModel,
+    });
+  }
+
+  return updateBaseProduct({ product_id, payload });
 }
 
 /**
@@ -80,6 +108,9 @@ async function createElectronics(payload) {
   return createBaseProduct({ ...payload, _id: newElectronic._id });
 }
 
+/**
+ * Create Furniture product
+ */
 async function createFurniture(payload) {
   const { product_attributes, product_shop } = payload;
 
@@ -99,13 +130,13 @@ async function createFurniture(payload) {
  * Product factory
  */
 const productRegistry = {
-  Clothing: createClothing,
-  Electronics: createElectronics,
-  Furniture: createFurniture,
+  Clothing: { create: createClothing, update: updateClothing },
+  Electronics: { create: createElectronics, update: updateClothing },
+  Furniture: { create: createFurniture, update: updateClothing },
 };
 
 export async function createProduct({ type, payload }) {
-  const createProductByType = productRegistry[type];
+  const createProductByType = productRegistry[type]?.create;
 
   if (!createProductByType) {
     throw new BadRequestError(`Invalid product type: ${type}`);
@@ -114,7 +145,18 @@ export async function createProduct({ type, payload }) {
   return createProductByType(payload);
 }
 
-export async function updateProduct() {}
+export async function updateProduct({ type, payload, product_id }) {
+  const updateProductByType = productRegistry[type]?.update;
+
+  if (!updateProductByType) {
+    throw new BadRequestError(`Invalid product type: ${type}`);
+  }
+
+  return updateProductByType({
+    payload: removeUndefinedObject(payload),
+    product_id,
+  });
+}
 
 //#endregion
 

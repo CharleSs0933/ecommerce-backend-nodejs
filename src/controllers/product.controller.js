@@ -18,6 +18,21 @@ export async function createProduct(req, res, next) {
   }
 }
 
+export async function updateProduct(req, res, next) {
+  try {
+    new SuccessResponse({
+      message: "Update product successfully",
+      metadata: await productService.updateProduct({
+        type: req.body.product_type,
+        product_id: req.params.id,
+        payload: { ...req.body, product_shop: req.user.userId },
+      }),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function publishProductByShop(req, res, next) {
   try {
     new SuccessResponse({
