@@ -5,6 +5,7 @@ import {
   furnitureModel,
 } from "../../models/product.model.js";
 import { Types } from "mongoose";
+import { getSelectData, unGetSelectData } from "../../utils/index.js";
 
 async function queryProduct({ query, limit, skip }) {
   return await productModel
@@ -23,6 +24,25 @@ export async function findAllDraftsForShop({ query, limit, skip }) {
 
 export async function findAllPublishForShop({ query, limit, skip }) {
   return await queryProduct({ query, limit, skip });
+}
+
+export async function findAllProducts({ limit, sort, page, filter, select }) {
+  const skip = (page - 1) * limit;
+  const sortBy = sort === "ctime" ? { _id: -1 } : { _id: 1 };
+  return await productModel
+    .find(filter)
+    .sort(sortBy)
+    .skip(skip)
+    .limit(limit)
+    .select(getSelectData(select))
+    .lean();
+}
+
+export async function findProduct({ product_id, unSelect }) {
+  return await productModel
+    .findById(product_id)
+    .select(unGetSelectData(unSelect))
+    .lean();
 }
 
 export async function searchProductByUser({ keySearch }) {

@@ -114,6 +114,8 @@ export async function createProduct({ type, payload }) {
   return createProductByType(payload);
 }
 
+export async function updateProduct() {}
+
 //#endregion
 
 //#region PUT
@@ -150,5 +152,24 @@ export async function findAllPublishForShop({
 
 export async function searchProducts({ keySearch }) {
   return await productRepo.searchProductByUser({ keySearch });
+}
+
+export async function findAllProducts({
+  limit = 50,
+  sort = "ctime",
+  page = 1,
+  filter = { isPublish: true },
+}) {
+  return await productRepo.findAllProducts({
+    limit,
+    sort,
+    page,
+    filter,
+    select: ["product_name", "product_price", "product_thumb"],
+  });
+}
+
+export async function findProduct({ product_id }) {
+  return await productRepo.findProduct({ product_id, unSelect: ["__v"] });
 }
 //#endregion

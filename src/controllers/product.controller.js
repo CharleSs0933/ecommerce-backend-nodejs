@@ -88,3 +88,25 @@ export async function getListSearchProduct(req, res, next) {
     next(error);
   }
 }
+
+export async function getAllProducts(req, res, next) {
+  try {
+    new SuccessResponse({
+      message: "Get list successfully",
+      metadata: await productService.findAllProducts(req.query),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getProduct(req, res, next) {
+  try {
+    new SuccessResponse({
+      message: "Get product successfully",
+      metadata: await productService.findProduct({ product_id: req.params.id }),
+    }).send(res);
+  } catch (error) {
+    next(error);
+  }
+}

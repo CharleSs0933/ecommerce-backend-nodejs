@@ -5,6 +5,8 @@ import { authentication } from "../../auth/authUtils.js";
 const router = express.Router();
 
 router.get("/search/:keySearch", productController.getListSearchProduct);
+router.get("/", productController.getAllProducts);
+router.get("/:id", productController.getProduct);
 
 // authentication
 router.use(authentication);
