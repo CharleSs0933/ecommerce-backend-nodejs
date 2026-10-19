@@ -6,6 +6,7 @@ import {
   furnitureModel,
 } from "../models/product.model.js";
 import * as productRepo from "../models/repositories/product.repo.js";
+import * as inventoryRepo from "../models/repositories/inventory.repo.js";
 import {
   removeUndefinedObject,
   updateNestedObjectParser,
@@ -41,8 +42,13 @@ async function createBaseProduct(payload) {
     product_attributes,
   });
 
-  if (!newProduct) {
-    throw new BadRequestError("Create new product error");
+  if (newProduct) {
+    // Add product_stock in inventory collection
+    await inventoryRepo.insertInventory({
+      product_id: newProduct._id,
+      shop_id: product_shop,
+      stock: product_quantity,
+    });
   }
 
   return newProduct;
