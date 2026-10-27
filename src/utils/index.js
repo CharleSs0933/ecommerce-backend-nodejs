@@ -1,4 +1,9 @@
 import _ from "lodash";
+import { Types } from "mongoose";
+
+export function convertToObjectId(id) {
+  return new Types.ObjectId(id);
+}
 
 export function getInfoData({ fields = [], object = {} }) {
   return _.pick(object, fields);
