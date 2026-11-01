@@ -101,3 +101,19 @@ export async function updateProductById({
 }) {
   return await model.findByIdAndUpdate(product_id, payload, { new: isNew });
 }
+
+export async function checkProduct({ products }) {
+  return await Promise.all(
+    products.map(async (product) => {
+      const foundProduct = await findProduct({
+        product_id: product.product_id,
+      });
+      if (foundProduct)
+        return {
+          price: foundProduct.product_price,
+          quantity: product.quantity,
+          product_id: product.product_id,
+        };
+    }),
+  );
+}
