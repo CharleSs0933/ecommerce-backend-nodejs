@@ -1,6 +1,10 @@
 import * as cartRepo from "../models/repositories/cart.repo.js";
 import * as productRepo from "../models/repositories/product.repo.js";
 
+import * as redisService from "./redis.service.js";
+
+import orderModel from "../models/order.model.js";
+
 import { BadRequestError, NotFoundError } from "../core/error.response.js";
 import { getDiscountAmount } from "./discount.service.js";
 
@@ -73,3 +77,66 @@ export async function checkoutReview({ cart_id, user_id, shop_order_ids }) {
     checkout_order,
   };
 }
+
+export async function orderByUser({
+  shop_order_ids,
+  cart_id,
+  user_id,
+  user_address = {},
+  user_payment = {},
+}) {
+  const { checkout_order, shop_order_ids_new } = await checkoutReview({
+    cart_id,
+    user_id,
+    shop_order_ids,
+  });
+
+  const products = shop_order_ids_new.flatMap((order) => order.item_products);
+
+  console.log(`[1]::`, products);
+
+  const acquireProducts = [];
+
+  for (let i = 0; i < products.length; i++) {
+    const { product_id, quantity } = products[i];
+
+    const keyLock = await redisService.acquireLock({
+      product_id,
+      quantity,
+      cart_id,
+    });
+
+    acquireProducts.push(keyLock ? true : false);
+
+    if (keyLock) {
+      await redisService.releaseLock(keyLock);
+    }
+  }
+
+  // Check neu co 1 san pham khong du so luong thi bao loi
+  if (acquireProducts.includes(false)) {
+    throw new BadRequestError("Product is out of stock");
+  }
+
+  const newOrder = await orderModel.create({
+    order_user_id: user_id,
+    order_checkout: checkout_order,
+    order_shipping: user_address,
+    order_payment: user_payment,
+    order_products: shop_order_ids_new,
+  });
+
+  // Truong hop thanh cong thi remove product trong cart
+  if (newOrder) {
+  }
+
+  return newOrder;
+}
+
+export async function getOrdersByUser() {}
+
+export async function getOrderDetailByUser() {}
+
+export async function cancelOrderByUser() {}
+
+export async function updateOrderStatusByShop() {}
